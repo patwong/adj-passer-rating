@@ -78,6 +78,7 @@ def csv_prossr(csv_filename, season_year):
 # end adding_ba_to_dict
 
 import os.path
+# 1966-2019 i.e. super bowl era
 for season_year in range(2009,2019):
     # do something
     csv_filename = str(season_year) + ".csv"

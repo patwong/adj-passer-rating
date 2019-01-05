@@ -1,0 +1,10 @@
+[log]
+2019.01.04
+- created task list
+- completed up to minimum pass attempts
+	* include players who would've met minimum pass attempts if not injured?
+- added Data folder
+
+2019.01.05
+- completed Data folder
+- 
