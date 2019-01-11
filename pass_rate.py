@@ -18,6 +18,7 @@ def csv_prossr(csv_filename, season_year, injury_check):
     cumulative_int = 0
     cumulative_rating = 0
 
+    qb_list = []
     for row in csv_reader:
         # csv file is currently formatted with the first line being "Name, Avg"
         # all subsequent elements are of that form
@@ -27,16 +28,16 @@ def csv_prossr(csv_filename, season_year, injury_check):
         # 9: pass attempts, 11: yards, 12: touchdowns, 14: interceptions
         # 21: passer rating
         
-        player_name = row[0]
-        if player_name != "Rk":
+        player_name = row[1]
+        if player_name != "Player":
             stripped_name = re.search(r'^[\w\s]+', player_name).group(0)
-            games_played = float(row[5])
-            games_started = float(row[6])
-            completed_passes = float(row[8])
-            pass_attempts = float(row[9])
-            passing_yards = float(row[11])
-            passing_tds = float(row[12])
-            int_thrown = float(row[14])
+            games_played = int(row[5])
+            games_started = int(row[6])
+            completed_passes = int(row[8])
+            pass_attempts = int(row[9])
+            passing_yards = int(row[11])
+            passing_tds = int(row[12])
+            int_thrown = int(row[14])
             passer_rating = float(row[21])
 
             # include minimum games played/attempts according to pfrs below
@@ -80,6 +81,8 @@ def csv_prossr(csv_filename, season_year, injury_check):
                 cumulative_yards += passing_yards
                 cumulative_td += passing_tds
                 cumulative_int += int_thrown
+                qb_temp = [stripped_name, games_played, games_started, completed_passes, pass_attempts, passing_yards,passing_tds, int_thrown, passer_rating]
+                qb_list.append(qb_temp)
             # endif
     # end loop
     rating_a = (cumulative_completion / cumulative_attempts - 0.3) * 5
@@ -87,19 +90,42 @@ def csv_prossr(csv_filename, season_year, injury_check):
     rating_c = cumulative_td / cumulative_attempts * 20
     rating_d = 2.375 - (cumulative_int / cumulative_attempts * 25)
     cumulative_rating = (rating_a + rating_b + rating_c + rating_d) / 6 * 100
-    # for safety, close the file
-    f1.close()
+    cumulative_rating = cumulative_rating if cumulative_rating >= 0 else 0
+    cumulative_rating = cumulative_rating if cumulative_rating <= 158.3 else 158.3
+    cumulative_rating = "%.1f" % cumulative_rating
+    print("league-wide passer rating is " + str(cumulative_rating))
+    print("list of qualifying quarterbacks and their statistics, sorted by passer rating")
+    # print("Name\t\tGames Played\t\tGames Started\t\tCompleted Passes\t\tPass Attempts\t\tYards\t\tTouchdowns\t\tInterceptions\t\tPasser Rating")
+    qb_list_sorted = sorted(qb_list, key = lambda x: x[-1], reverse=True)
+    qb_csv = 'Player,Games Played,Games Started,Pass Completions,Pass Attempts,Passing Yards,Touchdowns,Interceptions,Passer Rating\n'
+    for qb in qb_list_sorted:
+        output_string = ""
+        csv_string = ""
+        for qb_content in qb:
+            output_string += str(qb_content) + '\t\t'
+            csv_string += str(qb_content) + ','
+        # end loop
+        csv_string = csv_string[:-1] + '\n'
+        qb_csv += csv_string
+        output_string = output_string[:-2]
+        print(output_string)
+    # end loop
+    csv_new = str(season_year) + "_sorted.csv"
+    file1 = open(csv_new,'w')
+    file1.write(qb_csv)
+    file1.close()
 # end adding_ba_to_dict
 
 import os.path
 # 1966-2019 i.e. super bowl era
-for season_year in range(2009,2019):
-    # do something
-    csv_filename = str(season_year) + ".csv"
-    if os.path.isfile(csv_filename, season_year):
-        csv_prossr(csv_filename, season_year, 0)
-    else:
-        print("file not found:",csv_filename)
-        break
-    # endif
+csv_prossr('Data/2018.csv',2018,0)
+# for season_year in range(2009,2019):
+    # # do something
+    # csv_filename = str(season_year) + ".csv"
+    # if os.path.isfile(csv_filename, season_year):
+        # csv_prossr(csv_filename, season_year, 0)
+    # else:
+        # print("file not found:",csv_filename)
+        # break
+    # # endif
 # end loop

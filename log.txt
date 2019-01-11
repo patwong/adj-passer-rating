@@ -8,3 +8,6 @@
 2019.01.05
 - completed Data folder
 - 
+2019.01.09
+- finished outputting
+
