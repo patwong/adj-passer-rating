@@ -11,3 +11,12 @@
 2019.01.09
 - finished outputting
 
+2019.01.16
+- adding comp%, td%, int% column
+- fixed min_attempts check
+	- min_attempts was min_games inside if-statement
+- added "." and "'" check in regex stripping of player names
+- added check for players who did not minimum requirements
+	- adding asterisk to player names who would qualified based on prorated stats
+	- injury_check = 1 in user input
+-
