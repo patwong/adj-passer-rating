@@ -1,10 +1,12 @@
 player_dictionary = {}
 career_dictionary = {}
+
 def csv_prossr(csv_filename, season_year, injury_check):
     # injury_check = 0 default
     import csv
     import os.path
     import re
+    import scipy
     
     # would be safer to have script determine csv's encoding
     # manually determined in linux by "file -bi <filename>"
@@ -144,7 +146,7 @@ def csv_prossr(csv_filename, season_year, injury_check):
         output_string = output_string[:-2]
         print(output_string)
     # end loop
-    csv_new = str(season_year) + "_sorted.csv"
+    csv_new = "Output/" + str(season_year) + "_sorted.csv"
     file1 = open(csv_new,'w')
     file1.write(qb_csv)
     file1.close()
