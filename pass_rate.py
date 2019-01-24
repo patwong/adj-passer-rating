@@ -1,13 +1,13 @@
 player_dictionary = {}
-career_dictionary = {}
 season_dictionary = {}
+
 
 def csv_prossr(csv_filename, season_year, injury_check):
     # injury_check = 0 default
     import csv
     import os.path
     import re
-    import scipy
+    # import scipy
     
     # would be safer to have script determine csv's encoding
     # manually determined in linux by "file -bi <filename>"
@@ -19,8 +19,6 @@ def csv_prossr(csv_filename, season_year, injury_check):
     cumulative_yards = 0
     cumulative_td = 0
     cumulative_int = 0
-    cumulative_rating = 0
-
     qb_qualified_list = []
     qb_unqualified_list = []
     season_dictionary[season_year] = {}
@@ -118,16 +116,9 @@ def csv_prossr(csv_filename, season_year, injury_check):
             # putting stats into the season dictionary
             current_season_stats[stripped_name] = current_player_season
             if pass_attempts >= qualifying_passer:
-                qb_temp = [stripped_name, games_played, games_started, qualified_check, completed_passes, pass_attempts,
-                           completion_percentage, passing_yards, passing_tds, td_percent, int_thrown, int_percent,
-                           passer_rating]
-                qb_qualified_list.append(qb_temp)
+                qb_qualified_list.append(stripped_name)
             else:
-                qb_temp = [stripped_name + "*", games_played, games_started, qualified_check, completed_passes,
-                           pass_attempts,
-                           completion_percentage, passing_yards, passing_tds, td_percent, int_thrown, int_percent,
-                           passer_rating]
-                qb_unqualified_list.append(qb_temp)
+                qb_unqualified_list.append(stripped_name)
     # end loop
     rating_a = (cumulative_completion / cumulative_attempts - 0.3) * 5
     rating_b = (cumulative_yards / cumulative_attempts - 3) * 0.25
@@ -136,53 +127,73 @@ def csv_prossr(csv_filename, season_year, injury_check):
     cumulative_rating = (rating_a + rating_b + rating_c + rating_d) / 6 * 100
     cumulative_rating = cumulative_rating if cumulative_rating >= 0 else 0
     cumulative_rating = cumulative_rating if cumulative_rating <= 158.3 else 158.3
-    cumulative_rating = "%.1f" % cumulative_rating
-    print("league-wide passer rating is " + str(cumulative_rating))
+
+    print("league-wide passer rating is " + str("%.1f" % cumulative_rating))
     print("list of qualifying quarterbacks and their statistics, sorted by passer rating")
-    # print("Name\t\tGames Played\t\tGames Started\t\tCompleted Passes\t\tPass Attempts\t\tYards\t\tTouchdowns\t\tInterceptions\t\tPasser Rating")
     qb_list_sorted = sorted(qb_qualified_list, key = lambda x: x[-1], reverse=True)
     qb_unqualified_list = sorted(qb_unqualified_list, key = lambda x: x[1], reverse=True)
-    qb_csv = 'Player,Games Played,Games Started,Qualified Check,Pass Completions,Pass Attempts,Comp%,Passing Yards,Touchdowns,TD%,Interceptions,Int%,Passer Rating\n'
-    for qb in qb_list_sorted:
-        output_string = ""
-        csv_string = ""
-        for qb_content in qb:
-            output_string += str(qb_content) + '\t\t'
-            csv_string += str(qb_content) + ','
-        # end loop
-        csv_string = csv_string[:-1] + '\n'
+    qb_csv = 'Player,G,GS,Qualified,Cmp,Att,' \
+                + 'Comp%,Yards,TD,TD%,Int,Int%,Passer Rating,PR+\n'
+    for qb in qb_qualified_list:
+        current_qb = season_dictionary[season_year][qb]
+        current_qb['pr+'] = round(current_qb['passer_rating'] / cumulative_rating * 100, 1)
+        # update player_dict
+        csv_string = qb + "," \
+                    + str(current_qb['games_played']) + ","     \
+                    + str(current_qb['games_started']) + "," \
+                    + str(current_qb['qualified']) + "," \
+                    + str(current_qb['completed_passes']) + "," \
+                    + str(current_qb['pass_attempts']) + "," \
+                    + str(current_qb['completion_percentage']) + "," \
+                    + str(current_qb['passing_yards']) + ","    \
+                    + str(current_qb['passing_tds']) + "," \
+                    + str(current_qb['td_percent']) + "," \
+                    + str(current_qb['int_thrown']) + "," \
+                    + str(current_qb['int_percent']) + "," \
+                    + str(current_qb['passer_rating']) + ","    \
+                    + str(current_qb['pr+'])
+        csv_string += '\n'
         qb_csv += csv_string
-        output_string = output_string[:-2]
-        # print(output_string)
     # end loop
 
-    # outputting qbs who didn't qualify for the list
     for qb in qb_unqualified_list:
-        csv_string = ""
-        output_string = ""
-        for qb_content in qb:
-            output_string += str(qb_content) + '\t\t'
-            csv_string += str(qb_content) + ','
-        # end loop
-        csv_string = csv_string[:-1] + '\n'
+        current_qb = season_dictionary[season_year][qb]
+        current_qb['pr+'] = round(current_qb['passer_rating'] / cumulative_rating * 100, 1)
+        # update player_dict
+        csv_string = qb + "," \
+                    + str(current_qb['games_played']) + ","     \
+                    + str(current_qb['games_started']) + "," \
+                    + str(current_qb['qualified']) + "," \
+                    + str(current_qb['completed_passes']) + "," \
+                    + str(current_qb['pass_attempts']) + "," \
+                    + str(current_qb['completion_percentage']) + "," \
+                    + str(current_qb['passing_yards']) + ","    \
+                    + str(current_qb['passing_tds']) + "," \
+                    + str(current_qb['td_percent']) + "," \
+                    + str(current_qb['int_thrown']) + "," \
+                    + str(current_qb['int_percent']) + "," \
+                    + str(current_qb['passer_rating']) + ","    \
+                    + str(current_qb['pr+'])
+        csv_string += '\n'
         qb_csv += csv_string
-        output_string = output_string[:-2]
-        print(output_string)
     # end loop
+    qb_csv += "NFL cumulative passer rating: " + ("%.1f" % cumulative_rating) + '\n'
+    qb_csv += "qualified: 0 -> not qualified, 1 -> qualified, 2 -> on pace for qualification"
     csv_new = "Output/" + str(season_year) + "_sorted.csv"
-    file1 = open(csv_new,'w')
+    file1 = open(csv_new, 'w')
     file1.write(qb_csv)
     file1.close()
 # end adding_ba_to_dict
 
-import os.path
+
 # 1966-2019 i.e. super bowl era
-csv_prossr('Data/2018.csv',2018,1)
+csv_prossr('Data/2018.csv', 2018, 1)
+
 # for season_year in range(2009,2019):
     # # do something
     # csv_filename = str(season_year) + ".csv"
     # if os.path.isfile(csv_filename, season_year):
-        # csv_prossr(csv_filename, season_year, 0)
+        # csv_prossr(csv_filename, season_year, 1)
     # else:
         # print("file not found:",csv_filename)
         # break

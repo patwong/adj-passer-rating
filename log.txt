@@ -33,4 +33,7 @@
 	season: dictionary - key = season_year
 		season_year -> dictionary of player
 		player -> player's stats for the year
--
+
+2019.01.24
+- finished passer_rating+
+- 
