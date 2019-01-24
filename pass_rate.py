@@ -1,5 +1,6 @@
 player_dictionary = {}
 career_dictionary = {}
+season_dictionary = {}
 
 def csv_prossr(csv_filename, season_year, injury_check):
     # injury_check = 0 default
@@ -20,8 +21,10 @@ def csv_prossr(csv_filename, season_year, injury_check):
     cumulative_int = 0
     cumulative_rating = 0
 
-    qb_list = []
-    qb_injured_list = []
+    qb_qualified_list = []
+    qb_unqualified_list = []
+    season_dictionary[season_year] = {}
+    current_season_stats = season_dictionary[season_year]
     for row in csv_reader:
         # csv file is currently formatted with the first line being "Name, Avg"
         # all subsequent elements are of that form
@@ -60,51 +63,71 @@ def csv_prossr(csv_filename, season_year, injury_check):
             elif season_year in range(1976, 1978):
                 min_attempts = 12
             # endif
-            
+
             qualifying_passer = min_attempts * min_games
-            
+
             # injured passers who were on pace to qualifying
             if injury_check:
                 injury_check = pass_attempts / games_played * min_games
+            # end if
+
+            # debug check
             if stripped_name.lower() == "nick foles":
                 print("i'm here")
             # end test
 
-            # if pass_attempts >= qualifying_passer or injury_check >= qualifying_passer
-            if pass_attempts >= qualifying_passer or injury_check >= qualifying_passer:
+            # qualified: 0 -> not qualified, 1 -> qualified, 2 -> on pace for qualification
+            qualified_check = 0
+            if pass_attempts >= qualifying_passer:
+                qualified_check = 1
+            elif injury_check >= pass_attempts and injury_check >= qualifying_passer:
+                qualified_check = 2
+            else:
+                qualified_check = 0
+            # end if
+
+            # check if the current player is in the dictionary
+            if not(stripped_name in player_dictionary):
                 player_dictionary[stripped_name] = {}
-                current_player = player_dictionary[stripped_name]
-                completion_percentage = round(completed_passes / pass_attempts, 4) * 100
-                td_percent = round(passing_tds / pass_attempts, 4) * 100
-                int_percent = round(int_thrown / pass_attempts, 4) * 100
-                current_player['games_played'] = games_played
-                current_player['games_started'] = games_started
-                current_player['completed_passes'] = completed_passes
-                current_player['pass_attempts'] = pass_attempts
-                current_player['passing_yards'] = passing_yards
-                current_player['passing_tds'] = passing_tds
-                current_player['int_thrown'] = int_thrown
-                current_player['passer_rating'] = passer_rating
-                current_player['completion_percentage'] = completion_percentage
-                current_player['td_percent'] = td_percent
-                current_player['int_percent'] = int_percent
-                cumulative_completion += completed_passes
-                cumulative_attempts += pass_attempts
-                cumulative_yards += passing_yards
-                cumulative_td += passing_tds
-                cumulative_int += int_thrown
-                # qb_temp = [stripped_name, games_played, games_started, completed_passes, pass_attempts,completion_percentage, passing_yards,passing_tds, td_percent, int_thrown, int_percent, passer_rating]
-                if pass_attempts >= qualifying_passer:
-                    qb_temp = [stripped_name, games_played, games_started, completed_passes, pass_attempts,
-                               completion_percentage, passing_yards, passing_tds, td_percent, int_thrown, int_percent,
-                               passer_rating]
-                    qb_list.append(qb_temp)
-                else:
-                    qb_temp = [stripped_name + "*", games_played, games_started, completed_passes, pass_attempts,
-                               completion_percentage, passing_yards, passing_tds, td_percent, int_thrown, int_percent,
-                               passer_rating]
-                    qb_injured_list.append(qb_temp)
-            # endif
+            # end if
+            current_player = player_dictionary[stripped_name]
+            current_player[season_year] = {}
+            current_player_season = current_player[season_year]
+
+            completion_percentage = round(completed_passes / pass_attempts, 4) * 100
+            td_percent = round(passing_tds / pass_attempts, 4) * 100
+            int_percent = round(int_thrown / pass_attempts, 4) * 100
+            current_player_season['games_played'] = games_played
+            current_player_season['games_started'] = games_started
+            current_player_season['completed_passes'] = completed_passes
+            current_player_season['pass_attempts'] = pass_attempts
+            current_player_season['passing_yards'] = passing_yards
+            current_player_season['passing_tds'] = passing_tds
+            current_player_season['int_thrown'] = int_thrown
+            current_player_season['passer_rating'] = passer_rating
+            current_player_season['completion_percentage'] = completion_percentage
+            current_player_season['td_percent'] = td_percent
+            current_player_season['int_percent'] = int_percent
+            current_player_season['qualified'] = qualified_check
+            cumulative_completion += completed_passes
+            cumulative_attempts += pass_attempts
+            cumulative_yards += passing_yards
+            cumulative_td += passing_tds
+            cumulative_int += int_thrown
+
+            # putting stats into the season dictionary
+            current_season_stats[stripped_name] = current_player_season
+            if pass_attempts >= qualifying_passer:
+                qb_temp = [stripped_name, games_played, games_started, qualified_check, completed_passes, pass_attempts,
+                           completion_percentage, passing_yards, passing_tds, td_percent, int_thrown, int_percent,
+                           passer_rating]
+                qb_qualified_list.append(qb_temp)
+            else:
+                qb_temp = [stripped_name + "*", games_played, games_started, qualified_check, completed_passes,
+                           pass_attempts,
+                           completion_percentage, passing_yards, passing_tds, td_percent, int_thrown, int_percent,
+                           passer_rating]
+                qb_unqualified_list.append(qb_temp)
     # end loop
     rating_a = (cumulative_completion / cumulative_attempts - 0.3) * 5
     rating_b = (cumulative_yards / cumulative_attempts - 3) * 0.25
@@ -117,9 +140,9 @@ def csv_prossr(csv_filename, season_year, injury_check):
     print("league-wide passer rating is " + str(cumulative_rating))
     print("list of qualifying quarterbacks and their statistics, sorted by passer rating")
     # print("Name\t\tGames Played\t\tGames Started\t\tCompleted Passes\t\tPass Attempts\t\tYards\t\tTouchdowns\t\tInterceptions\t\tPasser Rating")
-    qb_list_sorted = sorted(qb_list, key = lambda x: x[-1], reverse=True)
-    qb_injured_list = sorted(qb_injured_list, key = lambda x: x[1], reverse=True)
-    qb_csv = 'Player,Games Played,Games Started,Pass Completions,Pass Attempts,Comp%,Passing Yards,Touchdowns,TD%,Interceptions,Int%,Passer Rating\n'
+    qb_list_sorted = sorted(qb_qualified_list, key = lambda x: x[-1], reverse=True)
+    qb_unqualified_list = sorted(qb_unqualified_list, key = lambda x: x[1], reverse=True)
+    qb_csv = 'Player,Games Played,Games Started,Qualified Check,Pass Completions,Pass Attempts,Comp%,Passing Yards,Touchdowns,TD%,Interceptions,Int%,Passer Rating\n'
     for qb in qb_list_sorted:
         output_string = ""
         csv_string = ""
@@ -134,7 +157,7 @@ def csv_prossr(csv_filename, season_year, injury_check):
     # end loop
 
     # outputting qbs who didn't qualify for the list
-    for qb in qb_injured_list:
+    for qb in qb_unqualified_list:
         csv_string = ""
         output_string = ""
         for qb_content in qb:

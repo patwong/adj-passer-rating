@@ -19,4 +19,18 @@
 - added check for players who did not minimum requirements
 	- adding asterisk to player names who would qualified based on prorated stats
 	- injury_check = 1 in user input
+
+
+2019.01.23
+- changed variables
+	qb_list -> qb_qualified_list
+	qb_injured_list -> qb_unqualified_list
+- added "qualified" player attribute
+	- values 0, 1, 2 supported (0: unqualified, 1: on-pace for qualification; 2: qualified players)
+	- removed filter from adding qualified/injured players into list
+- added "season" dictionary
+	season dictionary stores the stats for all players of the season
+	season: dictionary - key = season_year
+		season_year -> dictionary of player
+		player -> player's stats for the year
 -
