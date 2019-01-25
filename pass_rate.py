@@ -2,6 +2,17 @@ player_dictionary = {}
 season_dictionary = {}
 
 
+def passer_rating_calc(cmp, att, yards, td, ints):
+    rating_a = (cmp / att - 0.3) * 5
+    rating_b = (yards / att - 3) * 0.25
+    rating_c = td / att * 20
+    rating_d = 2.375 - (ints / att * 25)
+    cumulative_rating = (rating_a + rating_b + rating_c + rating_d) / 6 * 100
+    cumulative_rating = cumulative_rating if cumulative_rating >= 0 else 0
+    cumulative_rating = cumulative_rating if cumulative_rating <= 158.3 else 158.3
+    return cumulative_rating
+# end pr()
+
 def csv_prossr(csv_filename, season_year, injury_check):
     # injury_check = 0 default
     import csv
@@ -23,6 +34,27 @@ def csv_prossr(csv_filename, season_year, injury_check):
     qb_unqualified_list = []
     season_dictionary[season_year] = {}
     current_season_stats = season_dictionary[season_year]
+
+    # include minimum games played/attempts according to pfrs below
+    min_games = 16  # default min games
+    if season_year == 1987:
+        min_games = 15
+    elif season_year == 1982:
+        min_games = 9
+    elif season_year in range(1961, 1978):
+        min_games = 14
+    # endif
+
+    # min qualifying attempts per game for every season:
+    min_attempts = 14  # default min attempts per game played
+    if season_year < 1976:
+        min_attempts = 10
+    elif season_year in range(1976, 1978):
+        min_attempts = 12
+    # endif
+
+    qualifying_passer = min_attempts * min_games
+
     for row in csv_reader:
         # csv file is currently formatted with the first line being "Name, Avg"
         # all subsequent elements are of that form
@@ -44,42 +76,22 @@ def csv_prossr(csv_filename, season_year, injury_check):
             int_thrown = int(row[14])
             passer_rating = float(row[21])
 
-            # include minimum games played/attempts according to pfrs below
-            min_games = 16  # default min games
-            if season_year == 1987:
-                min_games = 15
-            elif season_year == 1982:
-                min_games = 9
-            elif season_year in range(1961,1978):
-                min_games = 14
-            # endif
-            
-            # min qualifying attempts per game for every season:
-            min_attempts = 14   # default min attempts per game played
-            if season_year < 1976:
-                min_attempts = 10
-            elif season_year in range(1976, 1978):
-                min_attempts = 12
-            # endif
-
-            qualifying_passer = min_attempts * min_games
-
             # injured passers who were on pace to qualifying
             if injury_check:
                 injury_check = pass_attempts / games_played * min_games
             # end if
 
             # debug check
-            if stripped_name.lower() == "nick foles":
-                print("i'm here")
+            # if stripped_name.lower() == "nick foles":
+            #     print("i'm here")
             # end test
 
-            # qualified: 0 -> not qualified, 1 -> qualified, 2 -> on pace for qualification
+            # qualified: 0 -> not qualified, 1 -> qualified, 0.5 -> on pace for qualification
             qualified_check = 0
             if pass_attempts >= qualifying_passer:
                 qualified_check = 1
             elif injury_check >= pass_attempts and injury_check >= qualifying_passer:
-                qualified_check = 2
+                qualified_check = 0.5
             else:
                 qualified_check = 0
             # end if
@@ -87,11 +99,29 @@ def csv_prossr(csv_filename, season_year, injury_check):
             # check if the current player is in the dictionary
             if not(stripped_name in player_dictionary):
                 player_dictionary[stripped_name] = {}
+                player_setup_temp = player_dictionary[stripped_name]
+                player_setup_temp['career'] = {}
+                player_setup = player_setup_temp['career']
+                player_setup['games_played'] = 0
+                player_setup['games_started'] = 0
+                player_setup['qualified'] = 0
+                player_setup['seasons'] = 0
+                player_setup['completed_passes'] = 0
+                player_setup['pass_attempts'] = 0
+                player_setup['completion_percentage'] = 0
+                player_setup['passing_yards'] = 0
+                player_setup['passing_tds'] = 0
+                player_setup['td_percent'] = 0
+                player_setup['int_thrown'] = 0
+                player_setup['int_percent'] = 0
+                player_setup['passer_rating'] = 0
+                # player_setup['pr+'] = 0
             # end if
+
+            # update dictionary
             current_player = player_dictionary[stripped_name]
             current_player[season_year] = {}
             current_player_season = current_player[season_year]
-
             completion_percentage = round(completed_passes / pass_attempts, 4) * 100
             td_percent = round(passing_tds / pass_attempts, 4) * 100
             int_percent = round(int_thrown / pass_attempts, 4) * 100
@@ -107,6 +137,31 @@ def csv_prossr(csv_filename, season_year, injury_check):
             current_player_season['td_percent'] = td_percent
             current_player_season['int_percent'] = int_percent
             current_player_season['qualified'] = qualified_check
+
+            # cumulative (career) stats for the player
+            player_career_stats = player_dictionary['career']
+            player_career_stats['games_played'] += games_played
+            player_career_stats['games_started'] += games_started
+            player_career_stats['qualified'] += qualified_check
+            player_career_stats['seasons'] += 1
+            player_career_stats['completed_passes'] += completed_passes
+            player_career_stats['pass_attempts'] += pass_attempts
+            player_career_stats['completion_percentage'] = round(player_career_stats['completed_passes'] / player_career_stats['pass_attempts'], 4) * 100
+            player_career_stats['passing_yards'] += passing_yards
+            player_career_stats['passing_tds'] += passing_tds
+            player_career_stats['td_percent'] += round(player_career_stats['passing_tds'] / player_career_stats['pass_attempts'], 4) * 100
+            player_career_stats['int_thrown'] += int_thrown
+            player_career_stats['int_percent'] += round(player_career_stats['int_thrown'] / player_career_stats['pass_attempts'], 4) * 100
+            player_career_stats['passer_rating'] = passer_rating_calc(player_career_stats['completed_passes'],
+                                                                      player_career_stats['pass_attempts'],
+                                                                      player_career_stats['passing_yards'],
+                                                                      player_career_stats['passing_tds'],
+                                                                      player_career_stats['int_thrown']
+                                                                      )
+            # player_career_stats['pr+'] =
+            # def passer_rating_calc(cmp, att, yards, td, ints):
+
+            # cumulative stats for the season
             cumulative_completion += completed_passes
             cumulative_attempts += pass_attempts
             cumulative_yards += passing_yards
@@ -115,23 +170,18 @@ def csv_prossr(csv_filename, season_year, injury_check):
 
             # putting stats into the season dictionary
             current_season_stats[stripped_name] = current_player_season
+
+            # creating list for easy sorting in csv output
             if pass_attempts >= qualifying_passer:
                 qb_qualified_list.append(stripped_name)
             else:
                 qb_unqualified_list.append(stripped_name)
     # end loop
-    rating_a = (cumulative_completion / cumulative_attempts - 0.3) * 5
-    rating_b = (cumulative_yards / cumulative_attempts - 3) * 0.25
-    rating_c = cumulative_td / cumulative_attempts * 20
-    rating_d = 2.375 - (cumulative_int / cumulative_attempts * 25)
-    cumulative_rating = (rating_a + rating_b + rating_c + rating_d) / 6 * 100
-    cumulative_rating = cumulative_rating if cumulative_rating >= 0 else 0
-    cumulative_rating = cumulative_rating if cumulative_rating <= 158.3 else 158.3
+
+    cumulative_rating = passer_rating_calc(cumulative_completion, cumulative_attempts, cumulative_yards, cumulative_td, cumulative_int)
 
     print("league-wide passer rating is " + str("%.1f" % cumulative_rating))
     print("list of qualifying quarterbacks and their statistics, sorted by passer rating")
-    qb_list_sorted = sorted(qb_qualified_list, key = lambda x: x[-1], reverse=True)
-    qb_unqualified_list = sorted(qb_unqualified_list, key = lambda x: x[1], reverse=True)
     qb_csv = 'Player,G,GS,Qualified,Cmp,Att,' \
                 + 'Comp%,Yards,TD,TD%,Int,Int%,Passer Rating,PR+\n'
     for qb in qb_qualified_list:
@@ -153,6 +203,18 @@ def csv_prossr(csv_filename, season_year, injury_check):
                     + str(current_qb['passer_rating']) + ","    \
                     + str(current_qb['pr+'])
         csv_string += '\n'
+
+        # calculating pr+
+        career_player_temp = player_dictionary[qb]
+        if 'pr+' in career_player_temp['career']:
+            for season in career_player_temp:
+                # calculate moving average?
+                print('hi')
+            # end loop
+        else:
+            career_player_temp['career']['pr+'] = current_qb['pr+']
+        # endif
+        player_dictionary[qb]['career']['pr+'] = 0
         qb_csv += csv_string
     # end loop
 
