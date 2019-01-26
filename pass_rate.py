@@ -115,6 +115,7 @@ def csv_prossr(csv_filename, season_year, injury_check):
                 player_setup['int_thrown'] = 0
                 player_setup['int_percent'] = 0
                 player_setup['passer_rating'] = 0
+                player_setup['_pr+_sum'] = 0
                 # player_setup['pr+'] = 0
             # end if
 
@@ -139,7 +140,7 @@ def csv_prossr(csv_filename, season_year, injury_check):
             current_player_season['qualified'] = qualified_check
 
             # cumulative (career) stats for the player
-            player_career_stats = player_dictionary['career']
+            player_career_stats = current_player['career']
             player_career_stats['games_played'] += games_played
             player_career_stats['games_started'] += games_started
             player_career_stats['qualified'] += qualified_check
@@ -158,7 +159,8 @@ def csv_prossr(csv_filename, season_year, injury_check):
                                                                       player_career_stats['passing_tds'],
                                                                       player_career_stats['int_thrown']
                                                                       )
-            # player_career_stats['pr+'] =
+            # player_career_stats['pr+'] = 0
+
             # def passer_rating_calc(cmp, att, yards, td, ints):
 
             # cumulative stats for the season
@@ -204,17 +206,14 @@ def csv_prossr(csv_filename, season_year, injury_check):
                     + str(current_qb['pr+'])
         csv_string += '\n'
 
-        # calculating pr+
-        career_player_temp = player_dictionary[qb]
-        if 'pr+' in career_player_temp['career']:
-            for season in career_player_temp:
-                # calculate moving average?
-                print('hi')
-            # end loop
+        # calculating career pr+
+        career_player = player_dictionary[qb]['career']
+        if 'pr+' in career_player:
+            career_player['_pr+_sum'] += current_qb['pr+'] * current_qb['games_played']
+            career_player['pr+'] = career_player['_pr+_sum'] / current_qb['games_played']
         else:
-            career_player_temp['career']['pr+'] = current_qb['pr+']
+            career_player['pr+'] = current_qb['pr+']
         # endif
-        player_dictionary[qb]['career']['pr+'] = 0
         qb_csv += csv_string
     # end loop
 
@@ -237,6 +236,14 @@ def csv_prossr(csv_filename, season_year, injury_check):
                     + str(current_qb['passer_rating']) + ","    \
                     + str(current_qb['pr+'])
         csv_string += '\n'
+        # calculating career pr+
+        career_player = player_dictionary[qb]['career']
+        if 'pr+' in career_player['career']:
+            career_player['_pr+_sum'] += current_qb['pr+'] * current_qb['games_played']
+            career_player['pr+'] = career_player['_pr+_sum'] / current_qb['games_played']
+        else:
+            career_player['pr+'] = current_qb['pr+']
+        # endif
         qb_csv += csv_string
     # end loop
     qb_csv += "NFL cumulative passer rating: " + ("%.1f" % cumulative_rating) + '\n'
@@ -249,15 +256,15 @@ def csv_prossr(csv_filename, season_year, injury_check):
 
 
 # 1966-2019 i.e. super bowl era
-csv_prossr('Data/2018.csv', 2018, 1)
-
-# for season_year in range(2009,2019):
-    # # do something
-    # csv_filename = str(season_year) + ".csv"
-    # if os.path.isfile(csv_filename, season_year):
-        # csv_prossr(csv_filename, season_year, 1)
-    # else:
-        # print("file not found:",csv_filename)
-        # break
-    # # endif
-# end loop
+# csv_prossr('Data/2018.csv', 2018, 1)
+import os
+for season_year in range(2009, 2019):
+    # do something
+    csv_filename = str(season_year) + ".csv"
+    if os.path.isfile(csv_filename):
+        csv_prossr(csv_filename, season_year, 1)
+    else:
+        print("file not found:", csv_filename)
+        break
+    # endif
+#end loop
