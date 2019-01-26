@@ -13,6 +13,13 @@ def passer_rating_calc(cmp, att, yards, td, ints):
     return cumulative_rating
 # end pr()
 
+def zero_default(row_item, row_num):
+    if type(row_item) == str:
+        return 0
+    else:
+        return row_item
+# end if
+
 def csv_prossr(csv_filename, season_year, injury_check):
     # injury_check = 0 default
     import csv
@@ -54,7 +61,7 @@ def csv_prossr(csv_filename, season_year, injury_check):
     # endif
 
     qualifying_passer = min_attempts * min_games
-
+    useful_rows = []
     for row in csv_reader:
         # csv file is currently formatted with the first line being "Name, Avg"
         # all subsequent elements are of that form
@@ -67,6 +74,10 @@ def csv_prossr(csv_filename, season_year, injury_check):
         player_name = row[1]
         if player_name != "Player":
             stripped_name = re.search(r'^[\w\s\.\']+', player_name).group(0)
+            for row_num in useful_rows:
+                if type(row) != int:
+                    print('hi')
+            # endloop
             games_played = int(row[5])
             games_started = int(row[6])
             completed_passes = int(row[8])
@@ -238,7 +249,7 @@ def csv_prossr(csv_filename, season_year, injury_check):
         csv_string += '\n'
         # calculating career pr+
         career_player = player_dictionary[qb]['career']
-        if 'pr+' in career_player['career']:
+        if 'pr+' in career_player:
             career_player['_pr+_sum'] += current_qb['pr+'] * current_qb['games_played']
             career_player['pr+'] = career_player['_pr+_sum'] / current_qb['games_played']
         else:
@@ -258,9 +269,9 @@ def csv_prossr(csv_filename, season_year, injury_check):
 # 1966-2019 i.e. super bowl era
 # csv_prossr('Data/2018.csv', 2018, 1)
 import os
-for season_year in range(2009, 2019):
+for season_year in range(1966, 2019):
     # do something
-    csv_filename = str(season_year) + ".csv"
+    csv_filename = "Data/" + str(season_year) + ".csv"
     if os.path.isfile(csv_filename):
         csv_prossr(csv_filename, season_year, 1)
     else:

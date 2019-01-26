@@ -39,8 +39,10 @@
 - moved passer_rating_calc() to external method
 - moved min_games and min_attempts outside csv_procssr() for loop
 - add qualified_season_counter to each player
--
+
 
 2019.01.25
 - finished career pr+ calculation
+- added zero_default()
+	- returns 0 if expected value is int/float
 -
