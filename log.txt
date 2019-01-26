@@ -49,4 +49,6 @@
 - moved csv_string for qb_qualified_list and qb_unqualified_list to external function
 - changed career minimums from 3 qualifying seasons to 1500 pass attempts
 	- https://www.pro-football-reference.com/about/minimums.htm
--
+
+2019.01.26
+- added AFL data from 1966-1969
