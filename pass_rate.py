@@ -13,12 +13,14 @@ def passer_rating_calc(cmp, att, yards, td, ints):
     return cumulative_rating
 # end pr()
 
-def zero_default(row_item, row_num):
-    if type(row_item) == str:
+
+def zero_default(row_item):
+    if row_item == '':
         return 0
     else:
         return row_item
 # end if
+
 
 def csv_prossr(csv_filename, season_year, injury_check):
     # injury_check = 0 default
@@ -73,19 +75,19 @@ def csv_prossr(csv_filename, season_year, injury_check):
         
         player_name = row[1]
         if player_name != "Player":
-            stripped_name = re.search(r'^[\w\s\.\']+', player_name).group(0)
+            stripped_name = re.search(r'^[\w\s\-\.\']+', player_name).group(0)
             for row_num in useful_rows:
                 if type(row) != int:
                     print('hi')
             # endloop
-            games_played = int(row[5])
-            games_started = int(row[6])
-            completed_passes = int(row[8])
-            pass_attempts = int(row[9])
-            passing_yards = int(row[11])
-            passing_tds = int(row[12])
-            int_thrown = int(row[14])
-            passer_rating = float(row[21])
+            games_played = int(zero_default(row[5]))
+            games_started = int(zero_default(row[6]))
+            completed_passes = int(zero_default(row[8]))
+            pass_attempts = int(zero_default(row[9]))
+            passing_yards = int(zero_default(row[11]))
+            passing_tds = int(zero_default(row[12]))
+            int_thrown = int(zero_default(row[14]))
+            passer_rating = float(zero_default(row[21]))
 
             # injured passers who were on pace to qualifying
             if injury_check:
@@ -154,7 +156,7 @@ def csv_prossr(csv_filename, season_year, injury_check):
             player_career_stats = current_player['career']
             player_career_stats['games_played'] += games_played
             player_career_stats['games_started'] += games_started
-            player_career_stats['qualified'] += qualified_check
+            player_career_stats['qualified'] += qualified_check if qualified_check == 1 else 0
             player_career_stats['seasons'] += 1
             player_career_stats['completed_passes'] += completed_passes
             player_career_stats['pass_attempts'] += pass_attempts
@@ -193,8 +195,8 @@ def csv_prossr(csv_filename, season_year, injury_check):
 
     cumulative_rating = passer_rating_calc(cumulative_completion, cumulative_attempts, cumulative_yards, cumulative_td, cumulative_int)
 
-    print("league-wide passer rating is " + str("%.1f" % cumulative_rating))
-    print("list of qualifying quarterbacks and their statistics, sorted by passer rating")
+    print("league-wide passer rating in " + str(season_year) + " is " + str("%.1f" % cumulative_rating))
+    # print("list of qualifying quarterbacks and their statistics, sorted by passer rating")
     qb_csv = 'Player,G,GS,Qualified,Cmp,Att,' \
                 + 'Comp%,Yards,TD,TD%,Int,Int%,Passer Rating,PR+\n'
     for qb in qb_qualified_list:
@@ -220,8 +222,8 @@ def csv_prossr(csv_filename, season_year, injury_check):
         # calculating career pr+
         career_player = player_dictionary[qb]['career']
         if 'pr+' in career_player:
-            career_player['_pr+_sum'] += current_qb['pr+'] * current_qb['games_played']
-            career_player['pr+'] = career_player['_pr+_sum'] / current_qb['games_played']
+            career_player['_pr+_sum'] += (current_qb['pr+'] * current_qb['games_played'])
+            career_player['pr+'] = career_player['_pr+_sum'] / career_player['games_played']
         else:
             career_player['pr+'] = current_qb['pr+']
         # endif
@@ -250,8 +252,8 @@ def csv_prossr(csv_filename, season_year, injury_check):
         # calculating career pr+
         career_player = player_dictionary[qb]['career']
         if 'pr+' in career_player:
-            career_player['_pr+_sum'] += current_qb['pr+'] * current_qb['games_played']
-            career_player['pr+'] = career_player['_pr+_sum'] / current_qb['games_played']
+            career_player['_pr+_sum'] += (current_qb['pr+'] * current_qb['games_played'])
+            career_player['pr+'] = career_player['_pr+_sum'] / career_player['games_played']
         else:
             career_player['pr+'] = current_qb['pr+']
         # endif
@@ -279,3 +281,42 @@ for season_year in range(1966, 2019):
         break
     # endif
 #end loop
+
+# get list of players who have 3+ qualified season
+qb_csv = 'Player,Years,G,GS,Qualified,Cmp,Att,' \
+                + 'Comp%,Yards,TD,TD%,Int,Int%,Passer Rating,PR+\n'
+for player_name in player_dictionary:
+    player_temp = player_dictionary[player_name]
+    player = player_dictionary[player_name]['career']
+    if player['qualified'] >= 3:
+        # get length of player's career
+        career_years = []
+        for season_key in player_temp:
+            if season_key != 'career':
+                career_years.append(season_key)
+        # end loop
+        career_years.sort()
+        career_range = str(career_years[0]) + "-" + str(career_years[-1])
+        csv_string = player_name + "," \
+                    + career_range + ',' \
+                    + str(player['games_played']) + ","     \
+                    + str(player['games_started']) + "," \
+                    + str(player['qualified']) + "," \
+                    + str(player['completed_passes']) + "," \
+                    + str(player['pass_attempts']) + "," \
+                    + str(player['completion_percentage']) + "," \
+                    + str(player['passing_yards']) + ","    \
+                    + str(player['passing_tds']) + "," \
+                    + str(player['td_percent']) + "," \
+                    + str(player['int_thrown']) + "," \
+                    + str(player['int_percent']) + "," \
+                    + str(round(player['passer_rating'],1)) + ","    \
+                    + str(round(player['pr+'],1))
+        csv_string += '\n'
+        qb_csv += csv_string
+    # end if
+# end loop
+csv_new = "Output/" + "pass_rate_leaders.csv"
+file1 = open(csv_new, 'w')
+file1.write(qb_csv)
+file1.close()
