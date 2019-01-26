@@ -45,4 +45,5 @@
 - finished career pr+ calculation
 - added zero_default()
 	- returns 0 if expected value is int/float
--
+- finished career pr+ calculation outputting
+- moved csv_string for qb_qualified_list and qb_unqualified_list to external function

@@ -22,6 +22,40 @@ def zero_default(row_item):
 # end if
 
 
+def csv_string_creator(qb_list, season_year, cumulative_rating):
+    csv_string = ""
+    for qb in qb_list:
+        current_qb = season_dictionary[season_year][qb]
+        current_qb['pr+'] = round(current_qb['passer_rating'] / cumulative_rating * 100, 1)
+        # update player_dict
+        csv_string += qb + "," \
+                    + str(current_qb['games_played']) + ","     \
+                    + str(current_qb['games_started']) + "," \
+                    + str(current_qb['qualified']) + "," \
+                    + str(current_qb['completed_passes']) + "," \
+                    + str(current_qb['pass_attempts']) + "," \
+                    + str(current_qb['completion_percentage']) + "," \
+                    + str(current_qb['passing_yards']) + ","    \
+                    + str(current_qb['passing_tds']) + "," \
+                    + str(current_qb['td_percent']) + "," \
+                    + str(current_qb['int_thrown']) + "," \
+                    + str(current_qb['int_percent']) + "," \
+                    + str(current_qb['passer_rating']) + ","    \
+                    + str(current_qb['pr+'])
+        csv_string += '\n'
+        # calculating career pr+
+        career_player = player_dictionary[qb]['career']
+        if 'pr+' in career_player:
+            career_player['_pr+_sum'] += (current_qb['pr+'] * current_qb['games_played'])
+            career_player['pr+'] = career_player['_pr+_sum'] / career_player['games_played']
+        else:
+            career_player['pr+'] = current_qb['pr+']
+        # endif
+    # end loop
+    return csv_string
+# end csv()
+
+
 def csv_prossr(csv_filename, season_year, injury_check):
     # injury_check = 0 default
     import csv
@@ -199,68 +233,10 @@ def csv_prossr(csv_filename, season_year, injury_check):
     # print("list of qualifying quarterbacks and their statistics, sorted by passer rating")
     qb_csv = 'Player,G,GS,Qualified,Cmp,Att,' \
                 + 'Comp%,Yards,TD,TD%,Int,Int%,Passer Rating,PR+\n'
-    for qb in qb_qualified_list:
-        current_qb = season_dictionary[season_year][qb]
-        current_qb['pr+'] = round(current_qb['passer_rating'] / cumulative_rating * 100, 1)
-        # update player_dict
-        csv_string = qb + "," \
-                    + str(current_qb['games_played']) + ","     \
-                    + str(current_qb['games_started']) + "," \
-                    + str(current_qb['qualified']) + "," \
-                    + str(current_qb['completed_passes']) + "," \
-                    + str(current_qb['pass_attempts']) + "," \
-                    + str(current_qb['completion_percentage']) + "," \
-                    + str(current_qb['passing_yards']) + ","    \
-                    + str(current_qb['passing_tds']) + "," \
-                    + str(current_qb['td_percent']) + "," \
-                    + str(current_qb['int_thrown']) + "," \
-                    + str(current_qb['int_percent']) + "," \
-                    + str(current_qb['passer_rating']) + ","    \
-                    + str(current_qb['pr+'])
-        csv_string += '\n'
-
-        # calculating career pr+
-        career_player = player_dictionary[qb]['career']
-        if 'pr+' in career_player:
-            career_player['_pr+_sum'] += (current_qb['pr+'] * current_qb['games_played'])
-            career_player['pr+'] = career_player['_pr+_sum'] / career_player['games_played']
-        else:
-            career_player['pr+'] = current_qb['pr+']
-        # endif
-        qb_csv += csv_string
-    # end loop
-
-    for qb in qb_unqualified_list:
-        current_qb = season_dictionary[season_year][qb]
-        current_qb['pr+'] = round(current_qb['passer_rating'] / cumulative_rating * 100, 1)
-        # update player_dict
-        csv_string = qb + "," \
-                    + str(current_qb['games_played']) + ","     \
-                    + str(current_qb['games_started']) + "," \
-                    + str(current_qb['qualified']) + "," \
-                    + str(current_qb['completed_passes']) + "," \
-                    + str(current_qb['pass_attempts']) + "," \
-                    + str(current_qb['completion_percentage']) + "," \
-                    + str(current_qb['passing_yards']) + ","    \
-                    + str(current_qb['passing_tds']) + "," \
-                    + str(current_qb['td_percent']) + "," \
-                    + str(current_qb['int_thrown']) + "," \
-                    + str(current_qb['int_percent']) + "," \
-                    + str(current_qb['passer_rating']) + ","    \
-                    + str(current_qb['pr+'])
-        csv_string += '\n'
-        # calculating career pr+
-        career_player = player_dictionary[qb]['career']
-        if 'pr+' in career_player:
-            career_player['_pr+_sum'] += (current_qb['pr+'] * current_qb['games_played'])
-            career_player['pr+'] = career_player['_pr+_sum'] / career_player['games_played']
-        else:
-            career_player['pr+'] = current_qb['pr+']
-        # endif
-        qb_csv += csv_string
-    # end loop
+    qb_csv += csv_string_creator(qb_qualified_list, season_year, cumulative_rating)
+    qb_csv += csv_string_creator(qb_unqualified_list, season_year, cumulative_rating)
     qb_csv += "NFL cumulative passer rating: " + ("%.1f" % cumulative_rating) + '\n'
-    qb_csv += "qualified: 0 -> not qualified, 1 -> qualified, 2 -> on pace for qualification"
+    qb_csv += "qualified: 0 -> not qualified|1 -> qualified|2 -> on pace for qualification"
     csv_new = "Output/" + str(season_year) + "_sorted.csv"
     file1 = open(csv_new, 'w')
     file1.write(qb_csv)
