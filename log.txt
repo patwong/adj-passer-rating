@@ -47,3 +47,6 @@
 	- returns 0 if expected value is int/float
 - finished career pr+ calculation outputting
 - moved csv_string for qb_qualified_list and qb_unqualified_list to external function
+- changed career minimums from 3 qualifying seasons to 1500 pass attempts
+	- https://www.pro-football-reference.com/about/minimums.htm
+-

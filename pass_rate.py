@@ -258,13 +258,13 @@ for season_year in range(1966, 2019):
     # endif
 #end loop
 
-# get list of players who have 3+ qualified season
+# get list of players who meet pro-football ref's career min reqs
 qb_csv = 'Player,Years,G,GS,Qualified,Cmp,Att,' \
                 + 'Comp%,Yards,TD,TD%,Int,Int%,Passer Rating,PR+\n'
 for player_name in player_dictionary:
     player_temp = player_dictionary[player_name]
     player = player_dictionary[player_name]['career']
-    if player['qualified'] >= 3:
+    if player['pass_attempts'] >= 1500:
         # get length of player's career
         career_years = []
         for season_key in player_temp:
