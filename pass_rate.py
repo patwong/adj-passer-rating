@@ -1,3 +1,6 @@
+import os
+import pickle
+
 player_dictionary = {}
 season_dictionary = {}
 
@@ -244,19 +247,39 @@ def csv_prossr(csv_filename, season_year, injury_check):
 # end adding_ba_to_dict
 
 
+# pickle intiation
+player_pickle = "Data/players.pickle"
+season_pickle = "Data/seasons.pickle"
+if os.path.isfile(player_pickle):
+    with open(player_pickle, 'rb') as pickle_handle:
+        player_dictionary = pickle.load(pickle_handle)
+if os.path.isfile(season_pickle):
+    with open(season_pickle, 'rb') as pickle_handle:
+        season_dictionary = pickle.load(pickle_handle)
+# end load
+
 # 1966-2019 i.e. super bowl era
 # csv_prossr('Data/2018.csv', 2018, 1)
-import os
-for season_year in range(1966, 2019):
-    # do something
-    csv_filename = "Data/" + str(season_year) + ".csv"
-    if os.path.isfile(csv_filename):
-        csv_prossr(csv_filename, season_year, 1)
-    else:
-        print("file not found:", csv_filename)
-        break
-    # endif
-#end loop
+if not(os.path.isfile(player_pickle)) and not(os.path.isfile(season_pickle)):
+    for season_year in range(1966, 2019):
+        # reads in source csv file and outputs csv with pr+
+        csv_filename = "Data/" + str(season_year) + ".csv"
+        if not(season_year in season_dictionary) and os.path.isfile(csv_filename):
+            csv_prossr(csv_filename, season_year, 1)
+        else:
+            print("file not found:", csv_filename)
+            break
+        # endif
+    # end loop
+
+    # dump created dictionaries into pickle
+    with open(player_pickle, 'wb') as player_dump_handle:
+        pickle.dump(player_dictionary, player_dump_handle, protocol=pickle.HIGHEST_PROTOCOL)
+    with open(season_pickle, 'wb') as season_dump_handle:
+        pickle.dump(season_dictionary, season_dump_handle, protocol=pickle.HIGHEST_PROTOCOL)
+    # end pickle
+# end if
+
 
 # get list of players who meet pro-football ref's career min reqs
 qb_csv = 'Player,Years,G,GS,Qualified,Cmp,Att,' \

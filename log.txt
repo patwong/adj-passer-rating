@@ -52,3 +52,8 @@
 
 2019.01.26
 - added AFL data from 1966-1969
+
+
+2019.02.04
+- adding pickle dictionary functionality
+- added pr8_scrap.py to test pickle files
