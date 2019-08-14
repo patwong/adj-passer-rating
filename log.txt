@@ -7,7 +7,7 @@
 
 2019.01.05
 - completed Data folder
-- 
+-
 2019.01.09
 - finished outputting
 
@@ -19,7 +19,6 @@
 - added check for players who did not minimum requirements
 	- adding asterisk to player names who would qualified based on prorated stats
 	- injury_check = 1 in user input
-
 
 2019.01.23
 - changed variables
@@ -40,7 +39,6 @@
 - moved min_games and min_attempts outside csv_procssr() for loop
 - add qualified_season_counter to each player
 
-
 2019.01.25
 - finished career pr+ calculation
 - added zero_default()
@@ -53,7 +51,13 @@
 2019.01.26
 - added AFL data from 1966-1969
 
-
 2019.02.04
 - adding pickle dictionary functionality
 - added pr8_scrap.py to test pickle files
+
+2019.08.14
+- career int% and td% were calculated incorrectly; value was cumulative rather than solely calculated using career stats
+- changed rounding from four significant digits to two on percentile stats (cmp%, int%, td%)
+- moved multiplication by 100 to inside round() for percentile stats
+- commented "import os.path" from csv_prossr(); vim says it may be unused
+- added gitignore

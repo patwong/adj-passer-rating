@@ -62,10 +62,10 @@ def csv_string_creator(qb_list, season_year, cumulative_rating):
 def csv_prossr(csv_filename, season_year, injury_check):
     # injury_check = 0 default
     import csv
-    import os.path
+    # import os.path
     import re
     # import scipy
-    
+
     # would be safer to have script determine csv's encoding
     # manually determined in linux by "file -bi <filename>"
     csv_file = open(csv_filename, 'rt', encoding='utf-8')
@@ -105,11 +105,11 @@ def csv_prossr(csv_filename, season_year, injury_check):
         # csv file is currently formatted with the first line being "Name, Avg"
         # all subsequent elements are of that form
         # csv.reader formats each line ("row") as a list of strings
-        # list indices:        
+        # list indices:
         # 0: name, 5: games played, 6: games started, 8: completed passes
         # 9: pass attempts, 11: yards, 12: touchdowns, 14: interceptions
         # 21: passer rating
-        
+
         player_name = row[1]
         if player_name != "Player":
             stripped_name = re.search(r'^[\w\s\-\.\']+', player_name).group(0)
@@ -173,9 +173,9 @@ def csv_prossr(csv_filename, season_year, injury_check):
             current_player = player_dictionary[stripped_name]
             current_player[season_year] = {}
             current_player_season = current_player[season_year]
-            completion_percentage = round(completed_passes / pass_attempts, 4) * 100
-            td_percent = round(passing_tds / pass_attempts, 4) * 100
-            int_percent = round(int_thrown / pass_attempts, 4) * 100
+            completion_percentage = round(completed_passes / pass_attempts * 100, 2)
+            td_percent = round(passing_tds / pass_attempts * 100, 2)
+            int_percent = round(int_thrown / pass_attempts * 100, 2)
             current_player_season['games_played'] = games_played
             current_player_season['games_started'] = games_started
             current_player_season['completed_passes'] = completed_passes
@@ -197,12 +197,12 @@ def csv_prossr(csv_filename, season_year, injury_check):
             player_career_stats['seasons'] += 1
             player_career_stats['completed_passes'] += completed_passes
             player_career_stats['pass_attempts'] += pass_attempts
-            player_career_stats['completion_percentage'] = round(player_career_stats['completed_passes'] / player_career_stats['pass_attempts'], 4) * 100
+            player_career_stats['completion_percentage'] = round(player_career_stats['completed_passes'] / player_career_stats['pass_attempts'] * 100, 2)
             player_career_stats['passing_yards'] += passing_yards
             player_career_stats['passing_tds'] += passing_tds
-            player_career_stats['td_percent'] += round(player_career_stats['passing_tds'] / player_career_stats['pass_attempts'], 4) * 100
+            player_career_stats['td_percent'] = round(player_career_stats['passing_tds'] / player_career_stats['pass_attempts'] * 100, 2)
             player_career_stats['int_thrown'] += int_thrown
-            player_career_stats['int_percent'] += round(player_career_stats['int_thrown'] / player_career_stats['pass_attempts'], 4) * 100
+            player_career_stats['int_percent'] = round(player_career_stats['int_thrown'] / player_career_stats['pass_attempts'] * 100, 2)
             player_career_stats['passer_rating'] = passer_rating_calc(player_career_stats['completed_passes'],
                                                                       player_career_stats['pass_attempts'],
                                                                       player_career_stats['passing_yards'],
